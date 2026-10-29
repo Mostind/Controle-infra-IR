@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Controle de Salas | IR + MQTT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b1020;--panel:#121a2e;--panel2:#18223a;--line:#293550;--text:#f2f5ff;--muted:#a6b1c9;--accent:#8b9cff;--accent2:#c1a5ff;--green:#5ee0ae;--red:#ff7f91;--yellow:#ffd479}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0%,#1a2850 0,transparent 35%),var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}button,input,select{font:inherit}button{cursor:pointer;border:0;border-radius:11px;padding:10px 13px;background:var(--accent);color:#11172a;font-weight:700}button.secondary{background:#26324e;color:var(--text);border:1px solid var(--line)}button.danger{background:#552b3a;color:#ffdce2}button:disabled{opacity:.45;cursor:not-allowed}.app{max-width:1200px;margin:auto;padding:24px}.top{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:25px}.brand{display:flex;gap:13px;align-items:center}.logo{width:46px;height:46px;border-radius:15px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;color:#11172a;font-size:23px;font-weight:900}.eyebrow{font-size:11px;letter-spacing:.15em;color:var(--muted);text-transform:uppercase}.brand h1{font-size:22px;margin:3px 0}.connection{display:flex;align-items:center;gap:8px;padding:10px 13px;background:var(--panel);border:1px solid var(--line);border-radius:99px;color:var(--muted);font-size:13px}.dot{width:8px;height:8px;border-radius:50%;background:#778199}.dot.on{background:var(--green);box-shadow:0 0 12px #5ee0ae88}.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:18px}.panel{background:linear-gradient(180deg,#151e34,#11182a);border:1px solid var(--line);border-radius:18px;padding:20px;min-width:0}.panel h2{font-size:16px;margin:0 0 5px}.sub{font-size:12px;color:var(--muted);margin:0 0 18px;line-height:1.5}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}.stat{padding:14px;background:#0e1526;border:1px solid var(--line);border-radius:14px}.stat span{display:block;color:var(--muted);font-size:12px}.stat strong{display:block;font-size:24px;margin-top:8px}.field{display:flex;flex-direction:column;gap:7px;margin-bottom:13px}.field label{font-size:12px;color:var(--muted)}input,select{width:100%;border:1px solid var(--line);border-radius:10px;background:#0b1222;color:var(--text);padding:11px 12px;outline:none}input:focus,select:focus{border-color:var(--accent)}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.actions{display:flex;flex-wrap:wrap;gap:8px}.list{display:flex;flex-direction:column;gap:9px}.item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px;border:1px solid var(--line);background:#0e1526;border-radius:13px}.item-main{min-width:0}.item strong{font-size:13px;display:block;overflow-wrap:anywhere}.item small{display:block;color:var(--muted);font-size:11px;margin-top:5px;overflow-wrap:anywhere}.item-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.item-actions button{padding:8px 10px;font-size:11px}.badge{font-size:10px;color:var(--green);background:#173b36;border-radius:7px;padding:5px 7px;white-space:nowrap}.badge.off{color:var(--yellow);background:#3c3321}.section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}.divider{height:1px;background:var(--line);margin:19px 0}.empty{border:1px dashed var(--line);border-radius:12px;text-align:center;padding:20px;color:var(--muted);font-size:12px}.statusline{color:var(--muted);font-size:12px;line-height:1.6;overflow-wrap:anywhere}.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#e7ecff;color:#11172a;border-radius:12px;padding:12px 16px;box-shadow:0 10px 40px #0007;display:none;max-width:90vw;font-size:13px;z-index:9}.wide{grid-column:1/-1}.tiny{font-size:11px;color:var(--muted)}.week{display:flex;flex-wrap:wrap;gap:8px}.week label{display:flex;align-items:center;gap:5px;background:#0b1222;border:1px solid var(--line);border-radius:8px;padding:8px;font-size:11px;color:var(--muted)}.week input{width:auto}.notice{padding:12px;border:1px solid #5a4c2e;background:#292418;color:#ffe2a2;border-radius:12px;font-size:12px;line-height:1.5;margin-bottom:18px}
+@media(max-width:850px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}.top{align-items:flex-start;flex-direction:column}.app{padding:15px}.stats{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:480px){.row{grid-template-columns:1fr}.stats{gap:6px}.stat{padding:10px}.stat strong{font-size:20px}.item{align-items:flex-start;flex-direction:column}.item-actions{justify-content:flex-start}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand"><div class="logo">IR</div><div><div class="eyebrow">AUTOMAÇÃO ESCOLAR</div><h1>Controle de salas</h1></div></div>
+    <div class="connection"><span id="connDot" class="dot"></span><span id="connText">MQTT desconectado</span></div>
+  </header>
+
+  <div class="notice"><b>Configuração:</b> este painel conecta ao EMQX por WebSocket TLS. Configure uma credencial MQTT autorizada no broker e preencha os campos abaixo. As credenciais digitadas ficam somente neste navegador durante esta sessão. Não coloque senhas administrativas no código publicado.</div>
+
+  <div class="grid">
+    <section class="panel">
+      <h2>Conexão MQTT</h2><p class="sub">Broker EMQX · WebSocket seguro (WSS)</p>
+      <div class="row">
+        <div class="field"><label>Usuário MQTT</label><input id="mqttUser" value="Esp32_jp" autocomplete="username"></div>
+        <div class="field"><label>Senha MQTT</label><input id="mqttPass" type="password" placeholder="Senha do broker" autocomplete="current-password"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Sala / ESP32</label><input id="roomId" value="sala01" placeholder="sala01"></div>
+        <div class="field"><label>Client ID do painel</label><input id="clientId" value="" placeholder="Gerado automaticamente"></div>
+      </div>
+      <div class="actions"><button id="connectBtn">Conectar</button><button class="secondary" id="disconnectBtn">Desconectar</button><button class="secondary" id="refreshBtn">Atualizar estado</button></div>
+      <div class="divider"></div>
+      <div class="stats">
+        <div class="stat"><span>Comandos</span><strong id="cmdCount">—/10</strong></div>
+        <div class="stat"><span>Agendamentos</span><strong id="schCount">—/10</strong></div>
+        <div class="stat"><span>Sinal Wi-Fi</span><strong id="rssi">—</strong></div>
+      </div>
+      <div class="statusline" id="deviceStatus">Aguardando conexão com o ESP32.</div>
+    </section>
+
+    <section class="panel">
+      <h2>Aprender sinal infravermelho</h2><p class="sub">O receptor conectado ao ESP32 captura o controle original e salva os tempos RAW.</p>
+      <div class="field"><label>Nome do comando</label><input id="learnName" placeholder="Ex.: Projetor - ligar"></div>
+      <div class="actions"><button id="learnBtn">● Iniciar aprendizado</button><button class="secondary" id="cancelLearnBtn">Cancelar</button></div>
+      <p class="tiny" style="margin-top:13px">Após iniciar, pressione o botão do controle original apontado para o receptor. A captura expira em 30 segundos.</p>
+      <div class="divider"></div>
+      <h2>Enviar comando manual</h2><p class="sub">Selecione um comando já aprendido.</p>
+      <div class="field"><label>Comando salvo</label><select id="commandSelect"><option value="">Nenhum comando recebido</option></select></div>
+      <button id="sendBtn">Enviar infravermelho</button>
+    </section>
+
+    <section class="panel">
+      <div class="section-head"><div><h2>Comandos salvos</h2><p class="sub" style="margin:5px 0 0">Até 10 por ESP32</p></div><span class="badge" id="commandBadge">0/10</span></div>
+      <div class="list" id="commandList"><div class="empty">Conecte-se e solicite o estado do ESP32.</div></div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head"><div><h2>Agendamentos</h2><p class="sub" style="margin:5px 0 0">Executados localmente pelo ESP32</p></div><span class="badge" id="scheduleBadge">0/10</span></div>
+      <div class="field"><label>Nome do agendamento</label><input id="scheduleName" placeholder="Ex.: Ligar projetor antes da aula"></div>
+      <div class="row">
+        <div class="field"><label>Comando</label><select id="scheduleCommand"><option value="">Selecione comando</option></select></div>
+        <div class="field"><label>Horário local</label><input id="scheduleTime" type="time" value="07:00"></div>
+      </div>
+      <div class="field"><label>Dias da semana</label>
+        <div class="week" id="days">
+          <label><input type="checkbox" value="0">Dom</label><label><input type="checkbox" value="1" checked>Seg</label><label><input type="checkbox" value="2" checked>Ter</label><label><input type="checkbox" value="3" checked>Qua</label><label><input type="checkbox" value="4" checked>Qui</label><label><input type="checkbox" value="5" checked>Sex</label><label><input type="checkbox" value="6">Sáb</label>
+        </div>
+      </div>
+      <div class="actions"><button id="saveScheduleBtn">Salvar agendamento</button><button class="secondary" id="clearScheduleBtn">Limpar formulário</button></div>
+      <div class="divider"></div>
+      <div class="list" id="scheduleList"><div class="empty">Nenhum agendamento recebido.</div></div>
+    </section>
+
+    <section class="panel wide">
+      <div class="section-head"><div><h2>Eventos recentes</h2><p class="sub" style="margin:5px 0 0">Mensagens recebidas nesta sessão</p></div><button class="secondary" id="clearLogBtn">Limpar histórico</button></div>
+      <div id="logs" class="list"><div class="empty">Nenhum evento ainda.</div></div>
+    </section>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<script>
+(() => {
+  const HOST = 'wss://vc7120c8.ala.us-east-1.emqxsl.com:8084/mqtt';
+  const ROOT = 'Topic_espjp';
+  let client = null, state = null, editingScheduleId = null;
+  const $ = id => document.getElementById(id);
+  const room = () => ($('roomId').value.trim() || 'sala01').replace(/[^a-zA-Z0-9_-]/g,'');
+  const base = () => `${ROOT}/${room()}`;
+  const topics = () => ({cmd:`${base()}/comando`,reply:`${base()}/resposta`,status:`${base()}/status`,data:`${base()}/dados`});
+  const makeId = prefix => prefix + '-' + Math.random().toString(16).slice(2,10);
+  function toast(msg){const el=$('toast');el.textContent=msg;el.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>el.style.display='none',3600);}
+  function log(msg,kind='info'){const box=$('logs');if(box.querySelector('.empty'))box.innerHTML='';const el=document.createElement('div');el.className='item';const d=new Date().toLocaleTimeString();el.innerHTML=`<div class="item-main"><strong>${escapeHtml(msg)}</strong><small>${d} · ${escapeHtml(kind)}</small></div>`;box.prepend(el);while(box.children.length>8)box.lastChild.remove();}
+  function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  function publish(obj){if(!client?.connected){toast('Conecte o MQTT primeiro.');return;}client.publish(topics().cmd,JSON.stringify(obj),{qos:1});}
+  function connect(){
+    if(typeof mqtt==='undefined'){toast('A biblioteca MQTT.js não carregou.');return;}
+    if(client) {try{client.end(true)}catch(e){}}
+    const id=$('clientId').value.trim() || ('painel-' + Math.random().toString(16).slice(2,10));
+    $('clientId').value=id;
+    client=mqtt.connect(HOST,{clientId:id,username:$('mqttUser').value.trim(),password:$('mqttPass').value,clean:true,connectTimeout:10000,reconnectPeriod:3000,keepalive:30,protocolVersion:4});
+    client.on('connect',()=>{setConnection(true,'MQTT conectado');const t=topics();client.subscribe([t.reply,t.status,t.data],{qos:1},err=>{if(err)log('Erro ao assinar tópicos: '+err.message,'erro');});setTimeout(()=>publish({action:'getState'}),500);log('Conectado ao broker para '+room(),'conexão');});
+    client.on('reconnect',()=>setConnection(false,'Reconectando…'));
+    client.on('close',()=>setConnection(false,'MQTT desconectado'));
+    client.on('error',e=>{setConnection(false,'Erro MQTT');log(e.message,'erro');toast('Falha MQTT: '+e.message);});
+    client.on('message',(topic,payload)=>{let msg;try{msg=JSON.parse(payload.toString())}catch(e){log('Mensagem não JSON recebida','aviso');return;}if(topic===topics().status){state=msg;renderState();}else if(topic===topics().reply){log((msg.ok===false?'Falha: ':'')+(msg.message||msg.type||'Resposta'),msg.type||'resposta');if(msg.message)toast(msg.message);}else if(topic===topics().data&&msg.type==='captured'){log('Sinal capturado: '+msg.name+' ('+msg.rawLength+' tempos)','infravermelho');toast('Sinal capturado e salvo no ESP32.');publish({action:'getState'});}});
+  }
+  function setConnection(on,text){$('connDot').classList.toggle('on',on);$('connText').textContent=text;}
+  function renderState(){
+    if(!state)return;
+    const cmds=state.commands||[], schs=state.schedules||[];
+    $('cmdCount').textContent=`${cmds.length}/10`;$('schCount').textContent=`${schs.length}/10`;$('rssi').textContent=state.rssi!=null?`${state.rssi} dBm`:'—';
+    $('commandBadge').textContent=`${cmds.length}/10`;$('scheduleBadge').textContent=`${schs.length}/10`;
+    $('deviceStatus').textContent=`Sala: ${state.room||room()} · Wi-Fi: ${state.wifi?'conectado':'desconectado'} · Relógio: ${state.timeValid?'sincronizado':'aguardando sincronização'} · Aprendizado: ${state.learning?'ativo':'inativo'}`;
+    $('commandSelect').innerHTML='<option value="">Selecione um comando</option>';
+    $('scheduleCommand').innerHTML='<option value="">Selecione comando</option>';
+    cmds.forEach(c=>{for(const id of ['commandSelect','scheduleCommand']){const o=document.createElement('option');o.value=c.id;o.textContent=c.name;$ (id).appendChild(o);}});
+    const cl=$('commandList');cl.innerHTML='';
+    if(!cmds.length)cl.innerHTML='<div class="empty">Nenhum comando salvo.</div>';
+    cmds.forEach(c=>{const el=document.createElement('div');el.className='item';el.innerHTML=`<div class="item-main"><strong>${escapeHtml(c.name)}</strong><small>ID: ${escapeHtml(c.id)} · ${c.rawLength||0} segmentos RAW</small></div><div class="item-actions"><button data-send="${escapeHtml(c.id)}">Enviar</button><button class="danger" data-delete="${escapeHtml(c.id)}">Excluir</button></div>`;cl.appendChild(el);});
+    cl.querySelectorAll('[data-send]').forEach(b=>b.onclick=()=>publish({action:'send',commandId:b.dataset.send}));
+    cl.querySelectorAll('[data-delete]').forEach(b=>b.onclick=()=>{if(confirm('Excluir este comando da memória do ESP32?'))publish({action:'deleteCommand',commandId:b.dataset.delete});});
+    const sl=$('scheduleList');sl.innerHTML='';
+    if(!schs.length)sl.innerHTML='<div class="empty">Nenhum agendamento salvo.</div>';
+    schs.forEach(s=>{const el=document.createElement('div');el.className='item';el.innerHTML=`<div class="item-main"><strong>${escapeHtml(s.name)} <span class="badge ${s.enabled?'':'off'}">${s.enabled?'Ativo':'Pausado'}</span></strong><small>${escapeHtml(s.time)} · ${escapeHtml(dayNames(s.daysMask))} · ${escapeHtml(commandName(s.commandId,cmds))}</small></div><div class="item-actions"><button class="secondary" data-toggle="${escapeHtml(s.id)}" data-enabled="${!s.enabled}">${s.enabled?'Pausar':'Ativar'}</button><button class="secondary" data-edit="${escapeHtml(s.id)}">Editar</button><button class="danger" data-sdel="${escapeHtml(s.id)}">Excluir</button></div>`;sl.appendChild(el);});
+    sl.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=()=>{const s=schs.find(x=>x.id===b.dataset.toggle);if(s)publish({action:'schedule',schedule:{...s,enabled:b.dataset.enabled==='true'}})});
+    sl.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>editSchedule(schs.find(x=>x.id===b.dataset.edit)));
+    sl.querySelectorAll('[data-sdel]').forEach(b=>b.onclick=()=>{if(confirm('Excluir este agendamento?'))publish({action:'schedule',schedule:{action:'delete',id:b.dataset.sdel}})});
+  }
+  function commandName(id,cmds){return (cmds.find(c=>c.id===id)||{}).name||'Comando removido';}
+  function dayNames(mask){const names=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];return names.filter((n,i)=>mask&(1<<i)).join(', ')||'Nenhum dia';}
+  function renderNoState(){state=null;$('deviceStatus').textContent='Aguardando estado do ESP32.';}
+  function editSchedule(s){if(!s)return;editingScheduleId=s.id;$('scheduleName').value=s.name||'';$('scheduleTime').value=s.time||'07:00';$('scheduleCommand').value=s.commandId||'';document.querySelectorAll('#days input').forEach(c=>c.checked=!!(s.daysMask&(1<<Number(c.value))));$('saveScheduleBtn').textContent='Atualizar agendamento';window.scrollTo({top:$('scheduleName').getBoundingClientRect().top+window.scrollY-100,behavior:'smooth'});}
+  function clearSchedule(){editingScheduleId=null;$('scheduleName').value='';$('scheduleTime').value='07:00';document.querySelectorAll('#days input').forEach(c=>c.checked=[1,2,3,4,5].includes(Number(c.value)));$('saveScheduleBtn').textContent='Salvar agendamento';}
+  $('connectBtn').onclick=connect;
+  $('disconnectBtn').onclick=()=>{if(client)client.end(true);client=null;setConnection(false,'MQTT desconectado');};
+  $('refreshBtn').onclick=()=>publish({action:'getState'});
+  $('learnBtn').onclick=()=>{const name=$('learnName').value.trim();if(!name){toast('Informe um nome para o comando.');return;}publish({action:'learn',name});log('Solicitado aprendizado: '+name,'infravermelho');};
+  $('cancelLearnBtn').onclick=()=>publish({action:'cancelLearn'});
+  $('sendBtn').onclick=()=>{const id=$('commandSelect').value;if(!id){toast('Selecione um comando.');return;}publish({action:'send',commandId:id});};
+  $('saveScheduleBtn').onclick=()=>{
+    const commandId=$('scheduleCommand').value,time=$('scheduleTime').value,name=$('scheduleName').value.trim()||'Agendamento';
+    if(!commandId||!time){toast('Selecione o comando e o horário.');return;}
+    let daysMask=0;document.querySelectorAll('#days input:checked').forEach(c=>daysMask|=1<<Number(c.value));if(!daysMask){toast('Selecione pelo menos um dia.');return;}
+    if(!editingScheduleId&&(state?.schedules||[]).length>=10){toast('Limite de 10 agendamentos atingido.');return;}
+    publish({action:'schedule',schedule:{id:editingScheduleId||makeId('sch'),name,commandId,time,enabled:true,daysMask}});
+    clearSchedule();
+  };
+  $('clearScheduleBtn').onclick=clearSchedule;
+  $('clearLogBtn').onclick=()=>$('logs').innerHTML='<div class="empty">Nenhum evento ainda.</div>';
+  $('roomId').addEventListener('change',()=>{toast('Sala alterada. Reconecte para assinar os tópicos da nova sala.');});
+})();
+</script>
+</body>
+</html>
